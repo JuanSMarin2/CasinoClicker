@@ -48,7 +48,7 @@ public class DiceManager : MonoBehaviour
 
     public string TokensText
     {
-        get { return "Fichas: " + FormatNumber(tokens); }
+        get { return "x" + FormatNumber(tokens); }
     }
 
     private void Update()
@@ -66,13 +66,13 @@ public class DiceManager : MonoBehaviour
         if (tokensTextUI != null)
             tokensTextUI.text = TokensText;
         if (diceLevelTextUI != null)
-            diceLevelTextUI.text = "Dados: " + diceLevel;
+            diceLevelTextUI.text = "x" + diceLevel;
         if (dicePriceTextUI != null)
-            dicePriceTextUI.text = "Precio de dado: " + FormatNumber(dicePrice);
+            dicePriceTextUI.text = "+1 x" + FormatNumber(dicePrice);
         if (dealerLevelTextUI != null)
-            dealerLevelTextUI.text = "Dealers: " + dealerLevel;
+            dealerLevelTextUI.text = "x" + dealerLevel;
         if (dealerPriceTextUI != null)
-            dealerPriceTextUI.text = "Precio de dealer: " + FormatNumber(dealerPrice);
+            dealerPriceTextUI.text = "$" + FormatNumber(dealerPrice);
 
         if (diceSummaryTextUI != null)
         {
