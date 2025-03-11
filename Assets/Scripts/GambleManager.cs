@@ -1,6 +1,8 @@
 using System.Globalization;
 using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
+using System.Collections;
 
 public class GambleManager : MonoBehaviour
 {
@@ -21,6 +23,8 @@ public class GambleManager : MonoBehaviour
     public bool isChanceTime = false;
     public long chanceTimeCost = 3000;
     public int levelToChance = 4;
+
+    private bool gambleState;
 
     public GameObject slotLevelTextObject;
     private TextMeshProUGUI slotLevelText;
@@ -49,8 +53,25 @@ public class GambleManager : MonoBehaviour
     public TextMeshProUGUI energyPriceTextUI;
     public TextMeshProUGUI chancePriceTextUI;
 
+    public GameObject winSlot;
+    public GameObject loseSlot;
+
+    public GameObject youWin;
+    public GameObject youLose;
+
+    public GameObject winCoin;
+    public GameObject loseCoin;
+
+    public AudioClip winClip;   // Asigna un AudioClip desde el Inspector
+    public AudioClip loseClip;
+    public AudioSource audioSource;
+ 
+    public AudioClip clockClip;
+
     private void Start()
     {
+
+    
         if (diceManager == null)
             diceManager = FindAnyObjectByType<DiceManager>();
 
@@ -71,6 +92,10 @@ public class GambleManager : MonoBehaviour
 
     private void Update()
     {
+
+
+
+
         AdjustBetAmounts();
         UpdateUI();
 
@@ -86,6 +111,31 @@ public class GambleManager : MonoBehaviour
             slotBetAmount = diceManager.tokens;
         if (coinBetAmount > diceManager.tokens)
             coinBetAmount = diceManager.tokens;
+
+        if (coinBetAmount < 0)
+            coinBetAmount = 0;
+
+        if (slotBetAmount < 0)
+            slotBetAmount = 0;
+    }
+
+    public void GambleResult(bool hasWin)
+    {
+        if (hasWin)
+        {
+            StartCoroutine(ShowResult(youWin));
+        }
+        else
+        {
+            StartCoroutine(ShowResult(youLose));
+        }
+    }
+
+    private IEnumerator ShowResult(GameObject resultObject)
+    {
+        resultObject.SetActive(true);
+        yield return new WaitForSeconds(0.5f);
+        resultObject.SetActive(false);
     }
 
     private void CalculateCosts()
@@ -107,7 +157,12 @@ public class GambleManager : MonoBehaviour
     public void IncreaseSlotBet()
     {
         if (slotLevel < 1) return; // Bloqueado hasta el nivel 1
-        long newBet = slotBetAmount + 100;
+
+        long increaseAmount = 100;
+        if (slotLevel >= 5) increaseAmount = 1000;
+     
+
+        long newBet = slotBetAmount + increaseAmount;
         if (newBet <= diceManager.tokens && newBet <= slotBetMax)
         {
             slotBetAmount = newBet;
@@ -116,8 +171,37 @@ public class GambleManager : MonoBehaviour
 
     public void DecreaseSlotBet()
     {
-        slotBetAmount = (long)Mathf.Max((float)slotBetAmount - 100, 0);
+        long decreaseAmount = 100;
+        if (slotLevel >= 5) decreaseAmount = 1000;
+      
+
+        slotBetAmount = (long)Mathf.Max((float)slotBetAmount - decreaseAmount, 0);
     }
+
+    public void IncreaseCoinBet()
+    {
+        if (slotLevel < 2) return; // Bloqueado hasta el nivel 2
+
+        long increaseAmount = 100;
+        if (slotLevel >= 5) increaseAmount = 1000;
+     
+
+        long newBet = coinBetAmount + increaseAmount;
+        if (newBet <= diceManager.tokens && newBet <= coinBetMax)
+        {
+            coinBetAmount = newBet;
+        }
+    }
+
+    public void DecreaseCoinBet()
+    {
+        long decreaseAmount = 100;
+        if (slotLevel >= 5) decreaseAmount = 1000;
+      
+
+        coinBetAmount = (long)Mathf.Max((float)coinBetAmount - decreaseAmount, 0);
+    }
+
 
     public void SetSlotBetMax()
     {
@@ -138,7 +222,7 @@ public class GambleManager : MonoBehaviour
         if (slotLevel < 1) return;
 
 
-        slotBetAmount = diceManager.tokens / 2;
+        slotBetAmount = slotBetMax / 2;
     }
 
     public void SetCoinBetMax()
@@ -158,25 +242,12 @@ public class GambleManager : MonoBehaviour
    public void SetCoinBetHalf()
     {
         if (slotLevel < 2) return;
-        coinBetAmount = diceManager.tokens / 2;
+        coinBetAmount = coinBetMax / 2;
     }
     #endregion
 
     #region Métodos para ajustar apuesta en Moneda
-    public void IncreaseCoinBet()
-    {
-        if (slotLevel < 2) return; // Bloqueado hasta el nivel 2
-        long newBet = coinBetAmount + 100;
-        if (newBet <= diceManager.tokens && newBet <= coinBetMax)
-        {
-            coinBetAmount = newBet;
-        }
-    }
 
-    public void DecreaseCoinBet()
-    {
-        coinBetAmount = (long)Mathf.Max((float)coinBetAmount - 100, 0);
-    }
     #endregion
 
     public void GambleSlot()
@@ -184,6 +255,7 @@ public class GambleManager : MonoBehaviour
         if (slotBetAmount <= 0)
         {
             Debug.Log("Apuesta de Slot es 0. Ajusta la cantidad para apostar.");
+            audioSource.PlayOneShot(loseClip);
             return;
         }
 
@@ -198,15 +270,26 @@ public class GambleManager : MonoBehaviour
                 long reward = isChanceTime ? slotBetAmount * 3 : slotBetAmount * 4;
                 diceManager.tokens += reward;
                 Debug.Log("¡Slot: Ganaste " + reward + " fichas!");
+
+                winSlot.SetActive(true);
+                audioSource.PlayOneShot(winClip);
+
+                gambleState = true;
+                GambleResult(gambleState);
             }
             else
             {
+                audioSource.PlayOneShot(loseClip);
                 Debug.Log("Slot: Perdiste la apuesta de " + slotBetAmount + " fichas.");
+                winSlot.SetActive(false);
+                gambleState = false;
+                GambleResult(gambleState);
             }
         }
         else
         {
             Debug.Log("No tienes suficientes fichas para apostar.");
+            audioSource.PlayOneShot(loseClip);
         }
     }
 
@@ -215,6 +298,7 @@ public class GambleManager : MonoBehaviour
         if (coinBetAmount <= 0)
         {
             Debug.Log("Apuesta de Moneda es 0. Ajusta la cantidad para apostar.");
+            audioSource.PlayOneShot(loseClip);
             return;
         }
 
@@ -234,19 +318,29 @@ public class GambleManager : MonoBehaviour
             }
             if (winCoinBet)
             {
-                long reward =  (long)Mathf.RoundToInt((float)coinBetAmount * 2f);
+                long reward = coinBetAmount * 2;
                 diceManager.tokens += reward;
                 Debug.Log("¡Moneda: Ganaste " + reward + " fichas!");
                 winCoinBet = false;
+                audioSource.PlayOneShot(winClip);
+                winCoin.SetActive(true);
+
+                gambleState = true;
+                GambleResult(gambleState);
             }
             else
             {
+                audioSource.PlayOneShot(loseClip);
+                winCoin.SetActive(false);
                 Debug.Log("Moneda: Perdiste la apuesta de " + coinBetAmount + " fichas.");
+                gambleState = false;
+                GambleResult(gambleState);
             }
         }
         else
         {
             Debug.Log("No tienes suficientes fichas para apostar en Moneda.");
+            audioSource.PlayOneShot(loseClip);
         }
     }
 
@@ -255,22 +349,45 @@ public class GambleManager : MonoBehaviour
         if (diceManager.tokens >= nextLevelCost && !isChanceTime)
         {
             slotLevel++;
-            unlockCost = (long)(unlockCost * 2.5f);
-            CalculateCosts();
+
+            if (slotLevel <= 5)
+            {
+                unlockCost = (long)(unlockCost * 2.2f);
+                CalculateCosts();
+            }
+            else {
+                unlockCost = (long)(unlockCost * 2.7f);
+                CalculateCosts();
+            }
+
             Debug.Log("Subiste al nivel " + slotLevel);
+            audioSource.PlayOneShot(winClip);
         }
+        else
+        {
+            audioSource.PlayOneShot(loseClip);
+        }
+
+        if(slotLevel >= 33)
+            SceneManager.LoadScene("Transcend");
     }
 
     public void ChanceTime()
     {
         if (diceManager.tokens >= chanceTimeCost && slotLevel >= levelToChance && !isChanceTime)
         {
+            audioSource.PlayOneShot(clockClip);
             diceManager.tokens -= chanceTimeCost;
             isChanceTime = true;
             startTime = Time.time;
             chanceTimeCost *= 30;
             levelToChance += 5;
             Debug.Log("IsChanceTime " + isChanceTime);
+        }
+        else
+        {
+           
+            audioSource.PlayOneShot(loseClip);
         }
     }
 
@@ -295,10 +412,15 @@ public class GambleManager : MonoBehaviour
         if (isChanceTime)
         {
             nextLevelCostText.text = "No puedes subir de nivel en chance time";
+           
+        }
+        else if (slotLevel < 32)
+        {
+            nextLevelCostText.text = "Fichas para subir de nivel: " + diceManager.FormatNumber(nextLevelCost);
         }
         else
         {
-            nextLevelCostText.text = "Fichas para subir de nivel: " + diceManager.FormatNumber(nextLevelCost);
+            nextLevelCostText.text = "Fichas para Trascender: " + diceManager.FormatNumber(nextLevelCost);
         }
        
 
@@ -318,7 +440,8 @@ public class GambleManager : MonoBehaviour
         if (slotLevel >= 2)
         {
             coinBetText.text = "Cantidad apostada: " + diceManager.FormatNumber(coinBetAmount);
-            coinWinText.text = "Recompensa: " + diceManager.FormatNumber(Mathf.RoundToInt(coinBetAmount * 1.8f));
+            long coinReward = (coinBetAmount * 2);
+            coinWinText.text = "Recompensa: " + diceManager.FormatNumber(coinReward);
             coinMaxBetText.text = "Máximo para apostar: " + diceManager.FormatNumber(coinBetMax);
             energyPriceTextUI.text = "Precio: " + diceManager.FormatNumber(diceManager.energyCost);
         }
@@ -356,6 +479,8 @@ public class GambleManager : MonoBehaviour
         {
             chancePriceTextUI.text = "Necesitas nivel: " + diceManager.FormatNumber(levelToChance);
         }
+
+        
     }
 }
 

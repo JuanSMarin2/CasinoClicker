@@ -11,6 +11,7 @@ public class DiceManagerUI : MonoBehaviour
     public GameObject upgrateBackground;
     public GameObject coinBackground;
     public GameObject infoUpgratesBackground;
+    public GameObject exitBackground;
 
 
 
@@ -65,5 +66,21 @@ public class DiceManagerUI : MonoBehaviour
     public void DeactivateinfoUpgrates()
     {
         infoUpgratesBackground.SetActive(false);
+    }
+
+    public void ActivateExit()
+    {
+        exitBackground.SetActive(true);
+    }
+
+    public void DeactivateExit()
+    {
+        exitBackground.SetActive(false);
+    }
+
+    public void Exit()
+    {
+        Application.Quit();
+        Debug.Log("Cerrar juego");
     }
 }
