@@ -424,11 +424,11 @@ public class GambleManager : MonoBehaviour
         {
             betCostText.text = "Cantidad apostada: " + diceManager.FormatNumber(slotBetAmount);
             winAmountText.text = "Recompensa: " + diceManager.FormatNumber((slotBetAmount * 5));
-            slotMaxBetText.text = "M�ximo para apostar: " + diceManager.FormatNumber(slotBetMax);
+            slotMaxBetText.text = "Maximo para apostar: " + diceManager.FormatNumber(slotBetMax);
         }
         else
         {
-            betCostText.text = "A�n no puedes apostar.";
+            betCostText.text = "Aun no puedes apostar.";
             winAmountText.text = "";
             slotMaxBetText.text = "";
         }
@@ -438,7 +438,7 @@ public class GambleManager : MonoBehaviour
             coinBetText.text = "Cantidad apostada: " + diceManager.FormatNumber(coinBetAmount);
             long coinReward = (coinBetAmount * 2);
             coinWinText.text = "Recompensa: " + diceManager.FormatNumber(coinReward);
-            coinMaxBetText.text = "M�ximo para apostar: " + diceManager.FormatNumber(coinBetMax);
+            coinMaxBetText.text = "Maximo para apostar: " + diceManager.FormatNumber(coinBetMax);
             energyPriceTextUI.text = "Precio: " + diceManager.FormatNumber(diceManager.energyCost);
         }
         else
